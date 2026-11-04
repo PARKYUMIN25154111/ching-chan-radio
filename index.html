@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>index.html</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #FFF3D1;
+    --paper: #FFFFFF;
+    --ink: #4A3022;
+    --ink-soft: #7A5B48;
+    --sun: #FFC93C;
+    --sun-deep: #E3A400;
+    --coral: #FF7B5C;
+    --coral-soft: #FFE3DA;
+    --mint: #2FB67C;
+    --mint-soft: #DDF6EA;
+    --line: #F0D9A6;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Nanum Gothic", system-ui, sans-serif;
+    font-size: 20px;
+    line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    overflow-x: hidden;
+  }
+  .app {
+    height: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+  }
+
+  /* 진행 표시 */
+  .progress { flex: none; padding: 14px 0 10px; }
+  .progress ol {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; justify-content: space-between; gap: 6px;
+  }
+  .dot {
+    flex: 1 1 0; min-width: 0; max-width: 56px; aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--paper);
+    border: 3px solid var(--line);
+    font-size: 18px; font-weight: 800; color: var(--ink-soft);
+  }
+  .dot.done { background: var(--mint-soft); border-color: var(--mint); color: var(--ink); }
+  .dot.now { background: var(--sun); border-color: var(--sun-deep); color: var(--ink); box-shadow: 0 0 0 4px #FFE9A6; }
+
+  /* 화면 영역 */
+  main {
+    flex: 1 1 auto; min-height: 0;
+    overflow-y: auto; overflow-x: hidden;
+    padding: 8px 8px 16px;
+  }
+  .screen { max-width: 100%; text-align: center; }
+  .screen[hidden] { display: none; }
+  h1, h2 { margin: 0; line-height: 1.3; }
+  h1 { font-size: 40px; }
+  h2 { font-size: 30px; }
+  h1:focus, h2:focus { outline: none; }
+  .big-emoji { font-size: 88px; line-height: 1.1; margin: 8px 0 4px; }
+  .sub { margin: 8px 0 0; font-size: 20px; color: var(--ink-soft); }
+
+  /* 시작 화면 */
+  .studio {
+    background: var(--paper);
+    border: 3px solid var(--line);
+    border-radius: 32px;
+    padding: 24px 20px 28px;
+  }
+  .field { margin: 22px auto 0; max-width: 440px; text-align: left; }
+  .field label { display: block; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .field input {
+    width: 100%; min-height: 60px;
+    font: inherit; font-size: 22px; color: var(--ink);
+    padding: 10px 18px;
+    border: 3px solid var(--line); border-radius: 20px; background: #FFFDF7;
+  }
+  .field input:focus { outline: 4px solid #FFE08A; border-color: var(--sun-deep); }
+
+  /* 단추 */
+  .btn {
+    font: inherit; font-size: 20px; font-weight: 800;
+    min-height: 56px; padding: 10px 26px;
+    border-radius: 28px; border: 3px solid var(--ink);
+    background: var(--paper); color: var(--ink);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .btn:focus-visible { outline: 4px solid var(--coral); outline-offset: 3px; }
+  .btn:active { transform: translateY(2px); }
+  .btn.primary { background: var(--sun); box-shadow: 0 5px 0 var(--sun-deep); }
+  .btn.primary:active { box-shadow: 0 2px 0 var(--sun-deep); }
+  .btn:disabled { opacity: .45; cursor: default; box-shadow: none; transform: none; }
+  .start-btn { margin-top: 26px; min-height: 68px; font-size: 26px; padding: 12px 44px; max-width: 100%; }
+
+  /* 칭찬하기 카드 */
+  .pick {
+    display: block; width: 100%; max-width: 440px; margin: 22px auto 0;
+    font: inherit; color: var(--ink);
+    background: var(--paper);
+    border: 4px solid var(--line); border-radius: 32px;
+    padding: 24px 18px 26px;
+    cursor: pointer; touch-action: manipulation;
+    position: relative;
+  }
+  .pick:focus-visible { outline: 4px solid var(--coral); outline-offset: 4px; }
+  .pick .pe { display: block; font-size: 96px; line-height: 1.1; }
+  .pick .pt { display: block; font-size: 32px; font-weight: 800; margin-top: 6px; }
+  .pick .ps { display: block; font-size: 20px; color: var(--ink-soft); margin-top: 4px; }
+  .pick .check {
+    display: none; position: absolute; top: -14px; right: 4px;
+    background: var(--mint); color: #fff;
+    font-size: 20px; font-weight: 800;
+    padding: 6px 16px; border-radius: 22px; border: 3px solid var(--paper);
+  }
+  .pick[aria-pressed="true"] { border-color: var(--mint); background: var(--mint-soft); }
+  .pick[aria-pressed="true"] .check { display: block; }
+  .pick.nudge { border-color: var(--coral); animation: nudge .5s; }
+  @keyframes nudge {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  @media (prefers-reduced-motion: reduce) { .pick.nudge { animation: none; } }
+
+  .msg {
+    max-width: 440px; margin: 18px auto 0;
+    background: var(--coral-soft);
+    border: 3px solid var(--coral); border-radius: 22px;
+    padding: 12px 18px;
+    font-size: 22px; font-weight: 800;
+  }
+  .msg[hidden] { display: none; }
+
+  /* 곧 만들 화면 */
+  .soon {
+    display: inline-block; margin-top: 22px;
+    background: var(--paper); border: 3px dashed var(--sun-deep);
+    border-radius: 24px; padding: 14px 26px;
+    font-size: 22px; font-weight: 800;
+  }
+
+  /* 3단계 사진 */
+  .methods { display: grid; gap: 12px; max-width: 440px; margin: 18px auto 0; }
+  .method { min-height: 64px; font-size: 22px; width: 100%; }
+  .method[aria-pressed="true"] { background: var(--mint-soft); border-color: var(--mint); }
+  .panel { max-width: 440px; margin: 18px auto 0; }
+  .panel[hidden], .stage[hidden], .row .btn[hidden] { display: none; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .row .btn { flex: 1 1 150px; }
+  .stage { margin-bottom: 14px; border-radius: 24px; overflow: hidden; background: #3A2619; border: 3px solid var(--ink); }
+  .stage video { display: block; width: 100%; max-height: 50vh; object-fit: contain; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); gap: 12px; }
+  .cpick {
+    font: inherit; color: var(--ink); cursor: pointer; touch-action: manipulation;
+    border: 4px solid var(--line); border-radius: 26px; padding: 14px 8px; position: relative;
+  }
+  .cpick:focus-visible { outline: 4px solid var(--coral); outline-offset: 3px; }
+  .cpick .ce { display: block; font-size: 64px; line-height: 1.2; }
+  .cpick .ct { display: block; font-size: 20px; font-weight: 800; }
+  .cpick[aria-pressed="true"] { border-color: var(--mint); box-shadow: 0 0 0 4px var(--mint-soft); }
+  .cpick[aria-pressed="true"]::after {
+    content: "✔"; position: absolute; top: -8px; right: 2px; width: 36px; height: 36px;
+    display: grid; place-items: center; background: var(--mint); color: #fff;
+    border-radius: 50%; font-size: 20px; font-weight: 800; border: 3px solid var(--paper);
+  }
+  .chosen { max-width: 440px; margin: 22px auto 0; }
+  .chosen-box {
+    min-height: 140px; border: 3px dashed var(--line); border-radius: 26px; background: var(--paper);
+    display: grid; place-items: center; overflow: hidden; padding: 8px;
+  }
+  .chosen-box img { display: block; max-width: 100%; max-height: 40vh; border-radius: 18px; }
+  .chosen-box .none { font-size: 20px; color: var(--ink-soft); }
+  .chosen-box .ce { display: block; font-size: 88px; line-height: 1.2; }
+
+  /* 4단계 표현 */
+  .say { max-width: 440px; margin: 22px auto 0; text-align: left; }
+  .say label { display: block; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .say textarea {
+    display: block; width: 100%; min-height: 110px; resize: none;
+    font: inherit; font-size: 22px; line-height: 1.5; color: var(--ink);
+    padding: 12px 18px; border: 3px solid var(--line); border-radius: 20px; background: #FFFDF7;
+  }
+  .say textarea:focus { outline: 4px solid #FFE08A; border-color: var(--sun-deep); }
+  .say-head { margin: 18px 0 10px; font-size: 20px; font-weight: 800; }
+  .says { display: grid; gap: 10px; }
+  .spick {
+    font: inherit; font-size: 20px; font-weight: 800; color: var(--ink); text-align: left;
+    min-height: 56px; padding: 10px 18px; width: 100%;
+    background: var(--paper); border: 3px solid var(--line); border-radius: 22px;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .spick:focus-visible { outline: 4px solid var(--coral); outline-offset: 3px; }
+  .spick[aria-pressed="true"] { background: var(--mint-soft); border-color: var(--mint); }
+  .spick[aria-pressed="true"]::before { content: "✔ "; color: var(--mint); }
+  .say .msg { margin-left: 0; margin-right: 0; }
+  .done-btn { width: 100%; min-height: 64px; font-size: 24px; margin-top: 20px; }
+
+  /* 5단계 소리 녹음 */
+  .mic {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 180px; height: 180px; max-width: 60vw; max-height: 60vw;
+    margin: 18px auto 0; border-radius: 50%;
+    font: inherit; color: var(--ink); cursor: pointer; touch-action: manipulation;
+    background: var(--sun); border: 4px solid var(--ink); box-shadow: 0 7px 0 var(--sun-deep);
+  }
+  .mic:focus-visible { outline: 4px solid var(--coral); outline-offset: 5px; }
+  .mic .me { font-size: 64px; line-height: 1.1; }
+  .mic .ml { font-size: 24px; font-weight: 800; }
+  .mic.listening { background: var(--coral); animation: blink 1s ease-in-out infinite; }
+  @keyframes blink {
+    0%, 100% { background: var(--coral); box-shadow: 0 0 0 0 rgba(255, 123, 92, .6); }
+    50% { background: var(--sun); box-shadow: 0 0 0 18px rgba(255, 123, 92, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .mic.listening { animation: none; } }
+  .read-btn { width: 100%; min-height: 60px; margin-top: 14px; }
+  .read-btn[hidden] { display: none; }
+
+  /* 6단계 카드 */
+  .bwrap { max-width: 480px; margin: 16px auto 0; text-align: left; }
+  .bcard {
+    border: 5px solid var(--ink); border-radius: 32px; padding: 14px 14px 18px;
+    text-align: center; background: var(--cbg, #FFE08A);
+  }
+  .b-banner {
+    display: inline-block; max-width: 100%; background: var(--paper); border: 3px solid var(--ink);
+    border-radius: 22px; padding: 4px 16px; font-size: 22px; font-weight: 800; overflow-wrap: anywhere;
+  }
+  .b-stick { min-height: 48px; font-size: 36px; line-height: 1.3; margin: 8px 0 4px; }
+  .b-media {
+    background: var(--paper); border: 3px solid var(--ink); border-radius: 24px;
+    min-height: 120px; display: grid; place-items: center; padding: 8px; overflow: hidden;
+  }
+  .b-media img { display: block; max-width: 100%; max-height: 36vh; border-radius: 16px; }
+  .b-media .ce { display: block; font-size: 84px; line-height: 1.2; }
+  .b-text {
+    background: var(--paper); border: 3px solid var(--ink); border-radius: 24px;
+    margin: 12px 0 0; padding: 14px 16px; font-size: 28px; font-weight: 800; line-height: 1.45;
+    word-break: keep-all; overflow-wrap: anywhere;
+  }
+  .b-mode { margin: 10px 0 0; font-size: 20px; font-weight: 800; }
+  .b-play { width: 100%; min-height: 64px; font-size: 24px; margin-top: 12px; }
+  .b-note { margin: 12px 0 0; font-size: 20px; font-weight: 800; text-align: center; }
+  .b-note[hidden] { display: none; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; }
+  .sw {
+    font: inherit; font-size: 20px; font-weight: 800; color: var(--ink); min-height: 56px;
+    border: 4px solid var(--ink); border-radius: 22px; cursor: pointer; touch-action: manipulation;
+  }
+  .sw:focus-visible, .stk:focus-visible { outline: 4px solid var(--coral); outline-offset: 3px; }
+  .sw[aria-pressed="true"] { box-shadow: 0 0 0 5px var(--mint); }
+  .sw[aria-pressed="true"]::before { content: "✔ "; }
+  .stickers { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 10px; }
+  .stk {
+    font: inherit; color: var(--ink); min-height: 76px; padding: 6px 4px;
+    background: var(--paper); border: 3px solid var(--line); border-radius: 20px;
+    cursor: pointer; touch-action: manipulation;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .stk .se { font-size: 32px; line-height: 1.2; }
+  .stk .sl { font-size: 18px; font-weight: 800; }
+  .stk[aria-pressed="true"] { background: var(--mint-soft); border-color: var(--mint); }
+  .auto-btn { width: 100%; min-height: 60px; margin-top: 18px; }
+
+  /* 7단계 우리 반 라디오 */
+  .post-btn { width: 100%; min-height: 64px; font-size: 24px; margin-bottom: 16px; }
+  .post-btn:disabled { opacity: .8; background: var(--mint-soft); border-color: var(--mint); box-shadow: none; }
+  #rStage[hidden] { display: none; }
+  .reacts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .react {
+    font: inherit; font-size: 20px; font-weight: 800; color: var(--ink); min-height: 72px;
+    background: var(--paper); border: 3px solid var(--ink); border-radius: 22px;
+    cursor: pointer; touch-action: manipulation;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .react:focus-visible, .mini:focus-visible { outline: 4px solid var(--coral); outline-offset: 3px; }
+  .react:active { transform: scale(.96); }
+  .react.first { background: var(--coral-soft); border-color: var(--coral); }
+  .react .re { font-size: 32px; line-height: 1.1; }
+  .minis { display: grid; grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); gap: 10px; }
+  .mini {
+    font: inherit; color: var(--ink); cursor: pointer; touch-action: manipulation; text-align: center;
+    border: 4px solid var(--ink); border-radius: 22px; padding: 8px; min-height: 130px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .mini .mt { height: 60px; display: grid; place-items: center; max-width: 100%; }
+  .mini .mt img { display: block; max-height: 60px; max-width: 100%; border-radius: 10px; }
+  .mini .me2 { font-size: 44px; line-height: 1.2; }
+  .mini .mw { font-size: 18px; font-weight: 800; }
+  .mini .mx {
+    font-size: 18px; line-height: 1.35; width: 100%; word-break: keep-all; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .mini .mh { font-size: 18px; font-weight: 800; }
+  .mini[aria-pressed="true"] { box-shadow: 0 0 0 5px var(--mint); }
+  .empty {
+    margin: 8px 0 0; padding: 16px; text-align: center; font-size: 20px; color: var(--ink-soft);
+    background: var(--paper); border: 3px dashed var(--line); border-radius: 22px;
+  }
+  .empty[hidden] { display: none; }
+  .row-btns { display: grid; gap: 12px; margin-top: 18px; }
+  .row-btns .btn { width: 100%; }
+
+  /* 아래 이전·다음 */
+  .nav {
+    flex: none; display: flex; gap: 12px;
+    padding: 12px 0 14px;
+    border-top: 3px solid var(--line);
+  }
+  .nav .btn { flex: 1 1 0; min-width: 0; }
+
+  @media (max-width: 420px) {
+    h1 { font-size: 34px; }
+    h2 { font-size: 26px; }
+    .big-emoji { font-size: 72px; }
+    .start-btn { padding-left: 24px; padding-right: 24px; }
+  }
+  @media (max-height: 560px) {
+    .big-emoji { font-size: 56px; margin: 0; }
+    .pick .pe { font-size: 64px; }
+    .pick { margin-top: 12px; padding: 14px 14px 16px; }
+  }
+  button:focus-visible { outline: 4px solid var(--coral); outline-offset: 3px; }
+  .nw { display: inline-block; white-space: nowrap; }
+  .b-play-round {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 96px; height: 96px; min-height: 96px; padding: 0; margin: 12px auto 0;
+    border-radius: 50%; font-size: 18px; line-height: 1.2; gap: 2px;
+  }
+  .b-play-round .pe { font-size: 30px; line-height: 1; }
+  @media (max-width: 360px) {
+    h1 { font-size: 30px; }
+    .start-btn { font-size: 22px; padding: 12px 16px; }
+    .method { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="progress" aria-label="진행 표시">
+    <ol id="dots"></ol>
+  </nav>
+
+  <main id="main">
+
+    <!-- 1 시작 -->
+    <section class="screen" data-step="0" aria-labelledby="t0">
+      <div class="studio">
+        <div class="big-emoji" aria-hidden="true">🎵📻🎵</div>
+        <h1 id="t0" tabindex="-1"><span class="nw">3학년 4반</span> <span class="nw">칭찬 라디오</span></h1>
+        <p class="sub">친구의 반짝이는 순간을 찾아요</p>
+        <div class="field">
+          <label for="nick">이름이나 별명 (안 써도 돼요)</label>
+          <input id="nick" type="text" maxlength="12" autocomplete="off" placeholder="여기에 써요">
+        </div>
+        <button class="btn primary start-btn" id="startBtn" type="button">🎙️ 시작하기</button>
+      </div>
+    </section>
+
+    <!-- 2 발견 -->
+    <section class="screen" data-step="1" aria-labelledby="t1" hidden>
+      <div class="big-emoji" aria-hidden="true">🔎</div>
+      <h2 id="t1" tabindex="-1">반짝이는 순간 발견</h2>
+      <p class="sub" id="hello">아래 카드를 눌러요</p>
+      <button class="pick" id="pickPraise" type="button" aria-pressed="false">
+        <span class="check" aria-hidden="true">✔ 골랐어요</span>
+        <span class="pe" aria-hidden="true">💛</span>
+        <span class="pt">칭찬하기</span>
+        <span class="ps">친구의 좋은 모습을 찾아요</span>
+      </button>
+      <div class="msg" id="pickMsg" role="alert" hidden>👆 칭찬하기 골라요</div>
+    </section>
+
+    <!-- 3 사진 -->
+    <section class="screen" data-step="2" aria-labelledby="t2" hidden>
+      <h2 id="t2" tabindex="-1">📷 친구의 사진을 올려 보아요</h2>
+      <p class="sub">방법을 하나 눌러요</p>
+
+      <div class="methods">
+        <button class="btn method" type="button" data-m="cam" aria-pressed="false"><span aria-hidden="true">📷</span> 사진 찍기</button>
+        <button class="btn method" type="button" data-m="up" aria-pressed="false"><span aria-hidden="true">🖼️</span> 사진 올리기</button>
+        <button class="btn method" type="button" data-m="card" aria-pressed="false"><span aria-hidden="true">🃏</span> 그림 카드 고르기</button>
+      </div>
+      <input type="file" id="fileIn" accept="image/*" hidden>
+
+      <div class="panel" id="panelCam" hidden>
+        <div class="stage" id="stage" hidden><video id="video" playsinline muted></video></div>
+        <div class="row">
+          <button class="btn primary" id="camOn" type="button">📷 카메라 켜기</button>
+          <button class="btn primary" id="shot" type="button" hidden>📸 찰칵</button>
+          <button class="btn" id="camOff" type="button" hidden>카메라 끄기</button>
+        </div>
+        <div class="msg" id="camMsg" role="alert" hidden></div>
+      </div>
+
+      <div class="panel" id="panelCard" hidden>
+        <div class="cards" id="cardGrid"></div>
+      </div>
+
+      <div class="chosen" id="chosen" aria-live="polite">
+        <div class="chosen-box" id="chosenBox"><span class="none">아직 사진이 없어요</span></div>
+        <p class="sub" id="chosenLabel">사진은 이 기기 안에서만 써요</p>
+      </div>
+    </section>
+
+    <!-- 4 표현 -->
+    <section class="screen" data-step="3" aria-labelledby="t3" hidden>
+      <h2 id="t3" tabindex="-1">💬 마음 표현하기</h2>
+      <div class="chosen">
+        <div class="chosen-box" id="topBox"></div>
+      </div>
+
+      <div class="say">
+        <label for="sentence">칭찬하는 말을 써요</label>
+        <textarea id="sentence" rows="3" maxlength="80" placeholder="여기에 써요"></textarea>
+
+        <p class="say-head">짧은 문장 카드를 눌러도 돼요</p>
+        <div class="says" id="sayGrid"></div>
+
+        <div class="msg" id="sayMsg" role="alert" hidden>✏️ 문장을 써요. 문장 카드를 눌러도 돼요</div>
+        <button class="btn primary done-btn" id="sayDone" type="button">✅ 문장 완성했어요</button>
+      </div>
+    </section>
+
+    <!-- 5 소리 녹음 -->
+    <section class="screen" data-step="4" aria-labelledby="t4" hidden>
+      <h2 id="t4" tabindex="-1">🎤 소리 녹음</h2>
+      <p class="sub">말하기, 문장 고르기, 직접 쓰기 중에 하나로 해요</p>
+
+      <button class="mic" id="micBtn" type="button" aria-pressed="false">
+        <span class="me" aria-hidden="true">🎤</span>
+        <span class="ml" id="micLabel">말하기</span>
+      </button>
+      <p class="sub" id="micState" aria-live="polite">단추를 누르고 말해요</p>
+
+      <div class="say">
+        <label for="voiceText">내 말이 여기에 나와요</label>
+        <textarea id="voiceText" rows="3" maxlength="80" placeholder="직접 써도 돼요"></textarea>
+        <div class="msg" id="vMsg" role="status" hidden></div>
+        <button class="btn primary read-btn" id="readBtn" type="button" hidden>🔊 들어 보기</button>
+
+        <p class="say-head">말하기 어려우면 문장을 골라요</p>
+        <div class="says" id="voiceGrid"></div>
+      </div>
+    </section>
+
+    <!-- 6 카드 -->
+    <section class="screen" data-step="5" aria-labelledby="t5" hidden>
+      <h2 id="t5" tabindex="-1">🎨 칭찬 카드 만들기</h2>
+      <p class="sub">꾸미지 않아도 카드가 완성돼요</p>
+
+      <div class="bwrap">
+        <article class="bcard" id="bCard" aria-label="칭찬 방송 카드">
+          <div class="b-banner"><span aria-hidden="true">📻</span> <span id="bTitle">칭찬 방송</span></div>
+          <div class="b-stick" id="bStick" aria-hidden="true"></div>
+          <div class="b-media" id="bMedia"></div>
+          <p class="b-text" id="bText"></p>
+          <button class="btn primary b-play-round" id="bPlay" type="button"><span class="pe" aria-hidden="true">🔊</span><span>녹음 듣기</span></button>
+        </article>
+        <p class="b-note" id="bNote" role="status" hidden></p>
+
+        <div class="deco">
+          <p class="say-head">틀 색깔을 골라요</p>
+          <div class="swatches" id="swGrid"></div>
+          <p class="say-head">스티커를 붙여요</p>
+          <div class="stickers" id="stGrid"></div>
+          <button class="btn auto-btn" id="bAuto" type="button">✨ 기본 디자인으로</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 우리 반 라디오 -->
+    <section class="screen" data-step="6" aria-labelledby="t6" hidden>
+      <h2 id="t6" tabindex="-1">📻 우리 반 라디오</h2>
+      <p class="sub">친구들의 칭찬 카드를 듣고 하트를 보내요</p>
+
+      <div class="bwrap">
+        <button class="btn primary post-btn" id="rPost" type="button">📻 내 카드 올리기</button>
+
+        <div id="rStage" hidden>
+          <div id="rBig"></div>
+          <button class="btn primary b-play" id="rPlay" type="button">🔊 듣기</button>
+          <div class="reacts" id="rReacts"></div>
+        </div>
+        <p class="b-note" id="rNote" role="status" hidden></p>
+
+        <p class="say-head" id="rHead" hidden>친구들의 칭찬 카드</p>
+        <div class="minis" id="rList"></div>
+        <p class="empty" id="rEmpty">아직 올린 카드가 없어요. 위 단추를 눌러 내 카드를 올려요</p>
+
+        <div class="row-btns">
+          <button class="btn" id="rAll" type="button">▶ 차례로 듣기</button>
+          <button class="btn" id="rNew" type="button">➕ 새 칭찬 카드 만들기</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="nav">
+    <button class="btn" id="prevBtn" type="button">◀ 이전</button>
+    <button class="btn primary" id="nextBtn" type="button">다음 ▶</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var TOTAL = 7;
+  var CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦'];
+  var step = 0;
+  var picked = false;   // 메모리에만 있어요. 저장하지 않아요.
+
+  var dots = document.getElementById('dots');
+  var screens = document.querySelectorAll('.screen');
+  var main = document.getElementById('main');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var startBtn = document.getElementById('startBtn');
+  var nick = document.getElementById('nick');
+  var hello = document.getElementById('hello');
+  var pick = document.getElementById('pickPraise');
+  var pickMsg = document.getElementById('pickMsg');
+
+  function drawDots() {
+    dots.innerHTML = '';
+    for (var i = 0; i < TOTAL; i++) {
+      var li = document.createElement('li');
+      li.className = 'dot' + (i < step ? ' done' : '') + (i === step ? ' now' : '');
+      li.textContent = i < step ? '✔' : CIRCLED[i];
+      li.setAttribute('aria-label', (i + 1) + '단계' + (i === step ? ', 지금 여기' : (i < step ? ', 끝났어요' : '')));
+      if (i === step) li.setAttribute('aria-current', 'step');
+      dots.appendChild(li);
+    }
+  }
+
+  function go(n) {
+    if (n < 0 || n > TOTAL - 1) return;
+    step = n;
+    stopCamera();
+    stopVoice();
+    pickMsg.hidden = true;
+    pick.classList.remove('nudge');
+    if (step === 1) {
+      var name = nick.value.trim();
+      hello.textContent = name ? name + ' 님, 아래 카드를 눌러요' : '아래 카드를 눌러요';
+    }
+    if (step === 3) renderTop();
+    if (step === 4) enterVoice();
+    if (step === 5) enterCard();
+    if (step === 6) enterRadio();
+    for (var i = 0; i < screens.length; i++) {
+      screens[i].hidden = Number(screens[i].getAttribute('data-step')) !== step;
+    }
+    prevBtn.disabled = step === 0;
+    nextBtn.disabled = step === TOTAL - 1;
+    drawDots();
+    main.scrollTop = 0;
+    var heading = document.querySelector('.screen[data-step="' + step + '"] h1, .screen[data-step="' + step + '"] h2');
+    if (heading) heading.focus({ preventScroll: true });
+  }
+
+  function next() {
+    if (step === 1 && !picked) {
+      pickMsg.hidden = false;
+      pick.classList.remove('nudge');
+      void pick.offsetWidth;
+      pick.classList.add('nudge');
+      return;
+    }
+    go(step + 1);
+  }
+
+  startBtn.addEventListener('click', function () { go(1); });
+  prevBtn.addEventListener('click', function () { go(step - 1); });
+  nextBtn.addEventListener('click', next);
+  nick.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(1); });
+
+  pick.addEventListener('click', function () {
+    picked = true;
+    pick.setAttribute('aria-pressed', 'true');
+    pick.classList.remove('nudge');
+    pickMsg.hidden = true;
+  });
+
+  /* 3단계: 사진 (사진은 화면 안 메모리에만 있어요. 저장하거나 보내지 않아요) */
+  var CARDS = [
+    { e: '🤝', t: '도와줬어요', c: '#DDF1FF' },
+    { e: '🍪', t: '나눠 줬어요', c: '#FFE7C2' },
+    { e: '💪', t: '끝까지 했어요', c: '#FFDCE0' },
+    { e: '🙋', t: '용기를 냈어요', c: '#E4F7D6' },
+    { e: '🎨', t: '멋진 작품이에요', c: '#EADFFF' }
+  ];
+  var photo = null, stream = null, camToken = 0;
+  var methodBtns = document.querySelectorAll('.method');
+  var panelCam = document.getElementById('panelCam');
+  var panelCard = document.getElementById('panelCard');
+  var fileIn = document.getElementById('fileIn');
+  var stage = document.getElementById('stage');
+  var video = document.getElementById('video');
+  var camOn = document.getElementById('camOn');
+  var shot = document.getElementById('shot');
+  var camOff = document.getElementById('camOff');
+  var camMsg = document.getElementById('camMsg');
+  var cardGrid = document.getElementById('cardGrid');
+  var chosenBox = document.getElementById('chosenBox');
+  var chosenLabel = document.getElementById('chosenLabel');
+
+  function showCamMsg(t) { camMsg.textContent = t; camMsg.hidden = false; }
+
+  function stopCamera() {
+    camToken++;
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); }
+    stream = null;
+    video.srcObject = null;
+    stage.hidden = true;
+    camOn.hidden = false;
+    shot.hidden = true;
+    camOff.hidden = true;
+  }
+
+  function startCamera() {
+    camMsg.hidden = true;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showCamMsg('이 기기에서는 카메라를 켤 수 없어요. 사진 올리기나 그림 카드 고르기를 눌러요.');
+      return;
+    }
+    var my = ++camToken;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+      .then(function (s) {
+        if (my !== camToken) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+        stream = s;
+        video.srcObject = s;
+        stage.hidden = false;
+        camOn.hidden = true;
+        shot.hidden = false;
+        camOff.hidden = false;
+        shot.focus();
+        var p = video.play();
+        if (p && p.catch) p.catch(function () {});
+      })
+      .catch(function () {
+        if (my !== camToken) return;
+        showCamMsg('카메라를 켤 수 없어요. 카메라를 허락했는지 확인해요. 안 되면 사진 올리기나 그림 카드 고르기를 눌러요.');
+      });
+  }
+
+  function takeShot() {
+    var w = video.videoWidth, h = video.videoHeight;
+    if (!w || !h) { showCamMsg('조금만 기다려요. 카메라 화면이 보이면 다시 눌러요.'); return; }
+    var sc = Math.min(1, 1280 / Math.max(w, h));
+    var cv = document.createElement('canvas');
+    cv.width = Math.round(w * sc);
+    cv.height = Math.round(h * sc);
+    cv.getContext('2d').drawImage(video, 0, 0, cv.width, cv.height);
+    setPhoto({ kind: 'img', src: cv.toDataURL('image/jpeg', 0.85), label: '찍은 사진이에요' });
+    stopCamera();
+    camOn.textContent = '📷 다시 찍기';
+    camOn.focus();
+  }
+
+  function setPhoto(p) {
+    if (photo && photo.revoke) URL.revokeObjectURL(photo.src);
+    photo = p;
+    chosenBox.innerHTML = '';
+    if (p.kind === 'img') {
+      var im = document.createElement('img');
+      im.src = p.src;
+      im.alt = '고른 사진';
+      chosenBox.appendChild(im);
+      chosenBox.style.background = '';
+    } else {
+      var sp = document.createElement('span');
+      sp.className = 'ce';
+      sp.textContent = CARDS[p.index].e;
+      chosenBox.appendChild(sp);
+      chosenBox.style.background = CARDS[p.index].c;
+    }
+    chosenLabel.textContent = '✔ ' + p.label;
+    var cps = cardGrid.querySelectorAll('.cpick');
+    for (var i = 0; i < cps.length; i++) {
+      cps[i].setAttribute('aria-pressed', (p.kind === 'card' && p.index === i) ? 'true' : 'false');
+    }
+  }
+
+  function setMethod(m) {
+    stopCamera();
+    camMsg.hidden = true;
+    for (var i = 0; i < methodBtns.length; i++) {
+      methodBtns[i].setAttribute('aria-pressed', methodBtns[i].getAttribute('data-m') === m ? 'true' : 'false');
+    }
+    panelCam.hidden = m !== 'cam';
+    panelCard.hidden = m !== 'card';
+  }
+
+  CARDS.forEach(function (c, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cpick';
+    b.style.background = c.c;
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<span class="ce" aria-hidden="true">' + c.e + '</span><span class="ct">' + c.t + '</span>';
+    b.addEventListener('click', function () {
+      setPhoto({ kind: 'card', index: i, label: c.t });
+    });
+    cardGrid.appendChild(b);
+  });
+
+  for (var mi = 0; mi < methodBtns.length; mi++) {
+    methodBtns[mi].addEventListener('click', function (e) {
+      var m = e.currentTarget.getAttribute('data-m');
+      setMethod(m);
+      if (m === 'up') fileIn.click();
+    });
+  }
+  camOn.addEventListener('click', startCamera);
+  camOff.addEventListener('click', function () { stopCamera(); camOn.focus(); });
+  shot.addEventListener('click', takeShot);
+  fileIn.addEventListener('change', function () {
+    var f = fileIn.files && fileIn.files[0];
+    if (!f) return;
+    setPhoto({ kind: 'img', src: URL.createObjectURL(f), revoke: true, label: '올린 사진이에요' });
+    fileIn.value = '';
+  });
+
+  /* 4단계: 표현 (문장은 화면 안 메모리에만 있어요) */
+  var SAYS = ['도와줘서 고마워요.', '함께 나눠 줘서 좋아요.', '끝까지 해서 멋져요.', '용기를 내서 대단해요.', '정말 멋진 작품이에요.'];
+  var topBox = document.getElementById('topBox');
+  var sentence = document.getElementById('sentence');
+  var sayGrid = document.getElementById('sayGrid');
+  var sayMsg = document.getElementById('sayMsg');
+  var sayDone = document.getElementById('sayDone');
+
+  function renderTop() {
+    topBox.innerHTML = '';
+    topBox.style.background = '';
+    var el;
+    if (!photo) {
+      el = document.createElement('span');
+      el.className = 'none';
+      el.textContent = '아직 사진이 없어요. ◀ 이전을 눌러 골라요';
+    } else if (photo.kind === 'img') {
+      el = document.createElement('img');
+      el.src = photo.src;
+      el.alt = '고른 사진';
+    } else {
+      el = document.createElement('span');
+      el.className = 'ce';
+      el.textContent = CARDS[photo.index].e;
+      topBox.style.background = CARDS[photo.index].c;
+    }
+    topBox.appendChild(el);
+  }
+
+  function syncSay() {
+    var v = sentence.value.trim();
+    var bs = sayGrid.querySelectorAll('.spick');
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].setAttribute('aria-pressed', bs[k].textContent === v ? 'true' : 'false');
+    }
+  }
+
+  SAYS.forEach(function (s) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'spick';
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = s;
+    b.addEventListener('click', function () {
+      sentence.value = s;
+      sayMsg.hidden = true;
+      syncSay();
+    });
+    sayGrid.appendChild(b);
+  });
+
+  sentence.addEventListener('input', function () { sayMsg.hidden = true; syncSay(); });
+  sayDone.addEventListener('click', function () {
+    if (!sentence.value.trim()) {
+      sayMsg.hidden = false;
+      sentence.focus();
+      return;
+    }
+    go(4);
+  });
+
+  /* 5단계: 소리 녹음 (말·문장은 화면 안 메모리에만 있어요) */
+  var VOICE_SAYS = [
+    '항상 친절하게 웃어 줘서 좋아요.',
+    '같이 놀아 줘서 정말 즐거워요.',
+    '내 이야기를 잘 들어 줘서 고마워요.',
+    '열심히 연습하는 모습이 멋져요.',
+    '내 마음을 알아 줘서 따뜻해요.',
+    '너는 우리 반의 반짝이는 별이에요.'
+  ];
+  var NO_VOICE = '말하기는 이 기기에서 안 돼요. 문장을 골라요';
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, srcMode = 'text';   // srcMode: 'voice'(아이가 말했어요) 또는 'text'(고르거나 썼어요)
+  var micBtn = document.getElementById('micBtn');
+  var micLabel = document.getElementById('micLabel');
+  var micState = document.getElementById('micState');
+  var voiceText = document.getElementById('voiceText');
+  var vMsg = document.getElementById('vMsg');
+  var readBtn = document.getElementById('readBtn');
+  var voiceGrid = document.getElementById('voiceGrid');
+  var IDLE_TEXT = '단추를 누르고 말해요';
+
+  function showVMsg(t) { vMsg.textContent = t; vMsg.hidden = false; }
+
+  function setListening(on) {
+    micBtn.classList.toggle('listening', on);
+    micBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    micLabel.textContent = on ? '듣고 있어요' : '말하기';
+    if (on) micState.textContent = '듣고 있어요. 말해요';
+  }
+
+  function updateRead() {
+    readBtn.hidden = !(srcMode === 'text' && voiceText.value.trim());
+  }
+
+  function syncVoiceCards() {
+    var v = voiceText.value.trim();
+    var bs = voiceGrid.querySelectorAll('.spick');
+    for (var k = 0; k < bs.length; k++) {
+      bs[k].setAttribute('aria-pressed', bs[k].textContent === v ? 'true' : 'false');
+    }
+  }
+
+  function stopVoice() {
+    var r = rec;
+    rec = null;
+    if (r) { try { r.abort(); } catch (e) {} }
+    setListening(false);
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+
+  function enterVoice() {
+    vMsg.hidden = true;
+    micState.textContent = IDLE_TEXT;
+    if (!voiceText.value.trim() && sentence.value.trim()) {
+      voiceText.value = sentence.value.trim();   // 4단계에서 쓴 문장을 받아요
+      srcMode = 'text';
+    }
+    syncVoiceCards();
+    updateRead();
+  }
+
+  function startListen() {
+    vMsg.hidden = true;
+    if (rec) { rec.stop(); return; }        // 듣는 중에 다시 누르면 멈춰요
+    if (!SR) { showVMsg(NO_VOICE); return; }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    var r = new SR();
+    var heard = false, failed = false;
+    r.lang = 'ko-KR';
+    r.interimResults = true;
+    r.continuous = false;
+    r.maxAlternatives = 1;
+    r.onstart = function () { setListening(true); };
+    r.onresult = function (e) {
+      var t = '';
+      for (var k = 0; k < e.results.length; k++) t += e.results[k][0].transcript;
+      t = t.trim();
+      if (!t) return;
+      heard = true;
+      voiceText.value = t;
+      srcMode = 'voice';
+      syncVoiceCards();
+      updateRead();
+    };
+    r.onerror = function (e) {
+      if (e.error === 'aborted') return;
+      failed = true;
+      if (e.error === 'no-speech') showVMsg('말이 안 들렸어요. 다시 눌러요');
+      else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') showVMsg(NO_VOICE + '. 마이크를 허락하면 말할 수 있어요');
+      else showVMsg(NO_VOICE);
+    };
+    r.onend = function () {
+      if (rec !== r) return;
+      rec = null;
+      setListening(false);
+      if (heard) micState.textContent = '🎤 내가 말한 내용이에요';
+      else {
+        micState.textContent = IDLE_TEXT;
+        if (!failed) showVMsg('말이 안 들렸어요. 다시 눌러요');
+      }
+    };
+    rec = r;
+    try { r.start(); } catch (err) { rec = null; setListening(false); showVMsg(NO_VOICE); }
+  }
+
+  // 말하지 않고 고르거나 썼을 때: 쓴 문장을 아이 목소리처럼 읽어 주기 (브라우저 읽어 주기)
+  function speakChild(text, done) {
+    vMsg.hidden = true;
+    if (!text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      if (text) showVMsg('이 기기에서는 읽어 주기가 안 돼요');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    pickKoVoice(function (best) {
+      // 문장 끝을 느낌표로 바꾸면 말끝이 밝게 올라가요
+      var lively = text.replace(/[.。]+\s*$/, '!');
+      var parts = (lively.match(/[^,.!?]+[,.!?]*/g) || [lively]).filter(function (p) { return p.trim(); });
+      parts.forEach(function (part, i) {
+        var last = i === parts.length - 1;
+        var u = new SpeechSynthesisUtterance(part.trim());
+        u.lang = 'ko-KR';
+        if (best) u.voice = best;
+        u.pitch = last ? 1.45 : (i % 2 ? 1.3 : 1.38);   // 말마다 높낮이를 다르게 해서 생생하게
+        u.rate = last ? 1.0 : 1.1;                       // 앞은 통통 튜게, 끝은 조금 느리게 강조
+        u.volume = 1;
+        if (i === 0) u.onstart = function () { micState.textContent = '🔊 아이 목소리로 읽어 주고 있어요'; };
+        if (last) u.onend = function () { micState.textContent = IDLE_TEXT; if (done) done(); };
+        u.onerror = function () { micState.textContent = IDLE_TEXT; if (last && done) done(); };
+        setTimeout(function () { window.speechSynthesis.speak(u); }, 80);   // 취소 직후 바로 말하면 안 읽는 기기가 있어서 잠깐 기다려요
+      });
+    });
+  }
+
+  // 이 기기에 있는 한국어 목소리 중 가장 자연스러운 것을 골라요
+  function scoreVoice(v) {
+    var n = (v.name || '').toLowerCase(), s = 0;
+    if (/natural|neural|premium|enhanced|wavenet|프리미엄|향상/.test(n)) s += 20;
+    if (/online/.test(n)) s += 5;
+    if (/sunhi|sun-hi|선히|yuna|유나|inji|인지|heami|해미|seoyeon|서연/.test(n)) s += 6;
+    if (/google|구글/.test(n)) s += 3;
+    if (/\bmale\b|injoon|인준|bongjin|봉진|gookmin|국민/.test(n)) s -= 4;
+    return s;
+  }
+
+  function pickKoVoice(cb) {
+    var synth = window.speechSynthesis;
+    function choose() {
+      var ko = (synth.getVoices() || []).filter(function (v) {
+        return (v.lang || '').toLowerCase().replace('_', '-').indexOf('ko') === 0;
+      });
+      var best = null, top = -99;
+      ko.forEach(function (v) { var s = scoreVoice(v); if (s > top) { top = s; best = v; } });
+      return best;
+    }
+    if ((synth.getVoices() || []).length) { cb(choose()); return; }
+    // 목소리 목록이 아직 안 떠서 잠깐 기다려요 (크롬에서 자주 생겨요)
+    var done = false;
+    function fin() { if (done) return; done = true; cb(choose()); }
+    if (synth.addEventListener) synth.addEventListener('voiceschanged', fin, { once: true });
+    setTimeout(fin, 700);
+  }
+
+  VOICE_SAYS.forEach(function (s) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'spick';
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = s;
+    b.addEventListener('click', function () {
+      if (rec) stopVoice();
+      voiceText.value = s;
+      srcMode = 'text';
+      syncVoiceCards();
+      updateRead();
+      speakChild(s);
+    });
+    voiceGrid.appendChild(b);
+  });
+
+  micBtn.addEventListener('click', startListen);
+  readBtn.addEventListener('click', function () { speakChild(voiceText.value.trim()); });
+  voiceText.addEventListener('input', function () {
+    srcMode = 'text';
+    vMsg.hidden = true;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    syncVoiceCards();
+    updateRead();
+  });
+
+  /* 6단계: 카드 (모든 것은 화면 안 메모리에만 있어요) */
+  var SW = [
+    { n: '노랑', c: '#FFE08A' }, { n: '분홍', c: '#FFD3DC' }, { n: '하늘', c: '#CDE9FF' },
+    { n: '연두', c: '#D5F2C4' }, { n: '보라', c: '#E5DAFF' }
+  ];
+  var STK = [
+    { e: '⭐', n: '별' }, { e: '💖', n: '하트' }, { e: '🌈', n: '무지개' }, { e: '🎈', n: '풍선' },
+    { e: '🎉', n: '폭죽' }, { e: '🦋', n: '나비' }, { e: '🌸', n: '꽃' }, { e: '🏅', n: '메달' }
+  ];
+  var DEFAULT_SAY = '너는 우리 반의 반짝이는 별이에요.';
+  var deco = { color: 0, stk: [0, 1, 2], touched: false };
+  var bCard = document.getElementById('bCard');
+  var bTitle = document.getElementById('bTitle');
+  var bStick = document.getElementById('bStick');
+  var bMedia = document.getElementById('bMedia');
+  var bText = document.getElementById('bText');
+  var bPlay = document.getElementById('bPlay');
+  var bNote = document.getElementById('bNote');
+  var bAuto = document.getElementById('bAuto');
+  var swGrid = document.getElementById('swGrid');
+  var stGrid = document.getElementById('stGrid');
+
+  function cardSay() { return voiceText.value.trim() || sentence.value.trim(); }
+
+  function applyDefault() {
+    deco.color = (photo && photo.kind === 'card') ? photo.index % SW.length : 0;
+    deco.stk = [0, 1, 2];
+    deco.touched = false;
+  }
+
+  function renderCard(extra) {
+    var name = nick.value.trim();
+    var say = cardSay();
+    bTitle.textContent = name ? name + '의 칭찬 방송' : '칭찬 방송';
+    bCard.style.setProperty('--cbg', SW[deco.color].c);
+    bStick.textContent = deco.stk.map(function (i) { return STK[i].e; }).join(' ');
+
+    bMedia.innerHTML = '';
+    bMedia.style.background = '';
+    var m;
+    if (photo && photo.kind === 'img') {
+      m = document.createElement('img');
+      m.src = photo.src;
+      m.alt = '칭찬하는 사진';
+    } else {
+      m = document.createElement('span');
+      m.className = 'ce';
+      m.textContent = (photo && photo.kind === 'card') ? CARDS[photo.index].e : '🌟';
+      if (photo && photo.kind === 'card') bMedia.style.background = CARDS[photo.index].c;
+    }
+    bMedia.appendChild(m);
+
+    bText.textContent = say || DEFAULT_SAY;
+
+    var notes = [];
+    if (!photo) notes.push('사진이 없어서 기본 그림을 넣었어요.');
+    if (!say) notes.push('문장이 없어서 기본 문장을 넣었어요.');
+    if (extra) notes.push(extra);
+    bNote.textContent = notes.join(' ');
+    bNote.hidden = !notes.length;
+
+    var sws = swGrid.querySelectorAll('.sw');
+    for (var a = 0; a < sws.length; a++) sws[a].setAttribute('aria-pressed', a === deco.color ? 'true' : 'false');
+    var sts = stGrid.querySelectorAll('.stk');
+    for (var b = 0; b < sts.length; b++) sts[b].setAttribute('aria-pressed', deco.stk.indexOf(b) >= 0 ? 'true' : 'false');
+  }
+
+  function enterCard() {
+    if (!deco.touched) applyDefault();   // 꾸미지 않았으면 기본 디자인으로 자동 완성
+    renderCard();
+  }
+
+  SW.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sw';
+    b.style.background = s.c;
+    b.setAttribute('aria-pressed', 'false');
+    b.textContent = s.n;
+    b.addEventListener('click', function () { deco.color = i; deco.touched = true; renderCard(); });
+    swGrid.appendChild(b);
+  });
+
+  STK.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'stk';
+    b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', s.n + ' 스티커');
+    b.innerHTML = '<span class="se" aria-hidden="true">' + s.e + '</span><span class="sl">' + s.n + '</span>';
+    b.addEventListener('click', function () {
+      var at = deco.stk.indexOf(i);
+      if (at >= 0) deco.stk.splice(at, 1); else deco.stk.push(i);
+      deco.touched = true;
+      renderCard();
+    });
+    stGrid.appendChild(b);
+  });
+
+  bAuto.addEventListener('click', function () {
+    applyDefault();
+    renderCard();
+  });
+
+  bPlay.addEventListener('click', function () {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      bNote.textContent = '이 기기에서는 읽어 주기가 안 돼요.';
+      bNote.hidden = false;
+      return;
+    }
+    speakChild(cardSay() || DEFAULT_SAY);
+  });
+
+  /* 7단계: 우리 반 라디오 (카드는 이 화면 안 메모리에만 있어요. 새로고침하면 사라져요) */
+  var REACTS = [
+    { e: '💗', n: '하트', m: '💗 하트를 보냈어요.' },
+    { e: '👏', n: '박수', m: '👏 박수를 보냈어요.' },
+    { e: '😊', n: '웃음', m: '😊 웃음을 보냈어요.' }
+  ];
+  var radio = [], cur = 0, lastSig = '', playing = false, playToken = 0;
+  var rPost = document.getElementById('rPost');
+  var rStage = document.getElementById('rStage');
+  var rBig = document.getElementById('rBig');
+  var rPlay = document.getElementById('rPlay');
+  var rReacts = document.getElementById('rReacts');
+  var rNote = document.getElementById('rNote');
+  var rHead = document.getElementById('rHead');
+  var rList = document.getElementById('rList');
+  var rEmpty = document.getElementById('rEmpty');
+  var rAll = document.getElementById('rAll');
+  var rNew = document.getElementById('rNew');
+
+  function hasTTS() { return !!(window.speechSynthesis && window.SpeechSynthesisUtterance); }
+  function showRNote(t) { rNote.textContent = t; rNote.hidden = !t; }
+
+  function curSig() {
+    var pk = photo ? (photo.kind === 'img' ? photo.src : 'c' + photo.index) : '-';
+    return JSON.stringify([pk, cardSay() || DEFAULT_SAY, nick.value.trim(), deco.color, deco.stk]);
+  }
+
+  function mediaEl(c, big) {
+    var el;
+    if (c.photo && c.photo.kind === 'img') {
+      el = document.createElement('img');
+      el.src = c.photo.src;
+      el.alt = '칭찬하는 사진';
+    } else {
+      el = document.createElement('span');
+      el.className = big ? 'ce' : 'me2';
+      el.textContent = (c.photo && c.photo.kind === 'card') ? CARDS[c.photo.index].e : '🌟';
+      el.setAttribute('aria-hidden', 'true');
+    }
+    return el;
+  }
+
+  function buildBig(c) {
+    var d = document.createElement('article');
+    d.className = 'bcard';
+    d.style.setProperty('--cbg', SW[c.color].c);
+    d.setAttribute('aria-label', '칭찬 방송 카드');
+    var bn = document.createElement('div');
+    bn.className = 'b-banner';
+    bn.textContent = '📻 ' + (c.name ? c.name + '의 칭찬 방송' : '칭찬 방송');
+    var st = document.createElement('div');
+    st.className = 'b-stick';
+    st.setAttribute('aria-hidden', 'true');
+    st.textContent = c.stk.map(function (i) { return STK[i].e; }).join(' ');
+    var md = document.createElement('div');
+    md.className = 'b-media';
+    if (c.photo && c.photo.kind === 'card') md.style.background = CARDS[c.photo.index].c;
+    md.appendChild(mediaEl(c, true));
+    var tx = document.createElement('p');
+    tx.className = 'b-text';
+    tx.textContent = c.text;
+    d.appendChild(bn); d.appendChild(st); d.appendChild(md); d.appendChild(tx);
+    return d;
+  }
+
+  function renderRadio() {
+    var has = radio.length > 0;
+    rEmpty.hidden = has;
+    rHead.hidden = !has;
+    rStage.hidden = !has;
+    rAll.disabled = !has;
+    rAll.textContent = playing ? '⏹ 멈추기' : '▶ 차례로 듣기';
+
+    var posted = has && lastSig === curSig();
+    rPost.disabled = posted;
+    rPost.textContent = posted ? '✔ 내 카드를 올렸어요' : '📻 내 카드 올리기';
+
+    rBig.innerHTML = '';
+    rList.innerHTML = '';
+    if (!has) return;
+    var c = radio[cur];
+    rBig.appendChild(buildBig(c));
+    var rb = rReacts.querySelectorAll('.react');
+    for (var k = 0; k < rb.length; k++) {
+      rb[k].lastChild.textContent = REACTS[k].n + ' ' + c.r[k];
+    }
+
+    radio.forEach(function (card, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mini';
+      b.style.background = SW[card.color].c;
+      b.setAttribute('aria-pressed', i === cur ? 'true' : 'false');
+      var who = card.name || ('카드 ' + (i + 1));
+      b.setAttribute('aria-label', who + ' 칭찬 카드');
+      var mt = document.createElement('span');
+      mt.className = 'mt';
+      mt.appendChild(mediaEl(card, false));
+      var mw = document.createElement('span');
+      mw.className = 'mw';
+      mw.textContent = who;
+      var mx = document.createElement('span');
+      mx.className = 'mx';
+      mx.textContent = card.text;
+      b.appendChild(mt); b.appendChild(mw); b.appendChild(mx);
+      if (card.r[0] > 0) {
+        var mh = document.createElement('span');
+        mh.className = 'mh';
+        mh.textContent = '💗 ' + card.r[0];
+        b.appendChild(mh);
+      }
+      b.addEventListener('click', function () {
+        stopPlay();
+        cur = i;
+        renderRadio();
+        rStage.scrollIntoView({ block: 'nearest' });
+        var nb = rList.children[i];
+        if (nb) nb.focus({ preventScroll: true });
+      });
+      rList.appendChild(b);
+    });
+  }
+
+  function stopPlay() {
+    playToken++;
+    playing = false;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    rAll.textContent = '▶ 차례로 듣기';
+  }
+
+  function playAll() {
+    if (playing) { stopPlay(); return; }
+    if (!radio.length) return;
+    if (!hasTTS()) { showRNote('이 기기에서는 읽어 주기가 안 돼요. 선생님이 대신 읽어 주세요'); return; }
+    showRNote('');
+    var my = ++playToken, i = 0;
+    playing = true;
+    rAll.textContent = '⏹ 멈추기';
+    (function next() {
+      if (my !== playToken || step !== 6) return;
+      if (i >= radio.length) { playing = false; renderRadio(); return; }
+      cur = i;
+      renderRadio();
+      rStage.scrollIntoView({ block: 'nearest' });
+      speakChild(radio[i].text, function () {
+        if (my !== playToken || step !== 6) return;
+        i++;
+        setTimeout(next, 600);
+      });
+    })();
+  }
+
+  function enterRadio() {
+    stopPlay();
+    showRNote('');
+    if (cur >= radio.length) cur = Math.max(0, radio.length - 1);
+    renderRadio();
+  }
+
+  function postCard() {
+    if (photo) photo.revoke = false;   // 올린 카드의 사진은 지우지 않아요
+    radio.push({
+      photo: photo ? { kind: photo.kind, src: photo.src, index: photo.index } : null,
+      text: cardSay() || DEFAULT_SAY,
+      name: nick.value.trim(),
+      color: deco.color,
+      stk: deco.stk.slice(),
+      r: [0, 0, 0]
+    });
+    lastSig = curSig();
+    cur = radio.length - 1;
+    stopPlay();
+    renderRadio();
+    rPlay.focus({ preventScroll: true });
+    showRNote('📻 내 카드를 올렸어요!');
+  }
+
+  function newCard() {
+    stopPlay();
+    stopVoice();
+    photo = null;
+    picked = false;
+    pick.setAttribute('aria-pressed', 'false');
+    pickMsg.hidden = true;
+    nick.value = '';
+    sentence.value = '';
+    voiceText.value = '';
+    srcMode = 'text';
+    deco = { color: 0, stk: [0, 1, 2], touched: false };
+    lastSig = '';
+    chosenBox.innerHTML = '<span class="none">아직 사진이 없어요</span>';
+    chosenBox.style.background = '';
+    chosenLabel.textContent = '사진은 이 기기 안에서만 써요';
+    camOn.textContent = '📷 카메라 켜기';
+    setMethod(null);
+    var cps = cardGrid.querySelectorAll('.cpick');
+    for (var q = 0; q < cps.length; q++) cps[q].setAttribute('aria-pressed', 'false');
+    syncSay();
+    syncVoiceCards();
+    updateRead();
+    micState.textContent = IDLE_TEXT;
+    vMsg.hidden = true;
+    go(0);
+  }
+
+  REACTS.forEach(function (r, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'react' + (i === 0 ? ' first' : '');
+    b.setAttribute('aria-label', r.n + ' 보내기');
+    b.innerHTML = '<span class="re" aria-hidden="true">' + r.e + '</span><span></span>';
+    b.addEventListener('click', function () {
+      if (!radio.length) return;
+      radio[cur].r[i]++;
+      renderRadio();
+      showRNote(r.m);
+    });
+    rReacts.appendChild(b);
+  });
+
+  rPost.addEventListener('click', postCard);
+  rAll.addEventListener('click', playAll);
+  rNew.addEventListener('click', newCard);
+  rPlay.addEventListener('click', function () {
+    if (!radio.length) return;
+    if (!hasTTS()) { showRNote('이 기기에서는 읽어 주기가 안 돼요. 선생님이 대신 읽어 주세요'); return; }
+    showRNote('');
+    stopPlay();
+    speakChild(radio[cur].text);
+  });
+
+  drawDots();
+  prevBtn.disabled = true;
+})();
+</script>
+</body>
+</html>
